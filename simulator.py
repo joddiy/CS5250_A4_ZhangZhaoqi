@@ -31,7 +31,7 @@ def FCFS_scheduling(process_list):
     for process in process_list:
         if(current_time < process.arrive_time):
             current_time = process.arrive_time
-        schedule.append((current_time,process.id))
+        schedule.append((current_time, process.id))
         waiting_time = waiting_time + (current_time - process.arrive_time)
         current_time = current_time + process.burst_time
     average_waiting_time = waiting_time/float(len(process_list))
@@ -40,7 +40,29 @@ def FCFS_scheduling(process_list):
 #Input: process_list, time_quantum (Positive Integer)
 #Output_1 : Schedule list contains pairs of (time_stamp, proccess_id) indicating the time switching to that proccess_id
 #Output_2 : Average Waiting Time
-def RR_scheduling(process_list, time_quantum ):
+def RR_scheduling(process_list, time_quantum):
+    schedule = []
+    ready_queue = [process_list.pop(0)] # insert the first process
+    current_time = 0
+    waiting_time = 0
+    while len(ready_queue) > 0 or len(process_list) > 0:
+        current_process = ready_queue.pop(0) # get a task from the head of queue
+        schedule.append((current_time, current_process.id))
+        if current_process.burst_time > time_quantum: # run the task for a quantum, then insert to the end of queue
+            current_process.burst_time -= time_quantum
+            current_time += time_quantum
+            while(True): # check whether comes in new task
+                if len(process_list) != 0 and process_list[0].arrive_time <= current_time: # assuming insert new task happend before insert back old task
+                    ready_queue.append(process_list.pop(0))
+                else:
+                    break
+        else: # finish the task
+            current_time += current_process.burst_time
+            waiting_time += waiting_time + (current_time - current_process.arrive_time)
+        average_waiting_time = waiting_time/float(len(process_list))
+        return schedule, average_waiting_time
+        
+
     return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
 
 def SRTF_scheduling(process_list):
