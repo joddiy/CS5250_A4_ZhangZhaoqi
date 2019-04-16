@@ -45,22 +45,31 @@ def RR_scheduling(process_list, time_quantum):
     ready_queue = [process_list.pop(0)] # insert the first process
     current_time = 0
     waiting_time = 0
+    len_process = len(process_list)
     while len(ready_queue) > 0 or len(process_list) > 0:
-        current_process = ready_queue.pop(0) # get a task from the head of queue
-        schedule.append((current_time, current_process.id))
-        if current_process.burst_time > time_quantum: # run the task for a quantum, then insert to the end of queue
-            current_process.burst_time -= time_quantum
+        current_process = None
+        if len(ready_queue) != 0: # still task need to be run
+            current_process = ready_queue.pop(0) # get a task from the head of queue
+            schedule.append((current_time, current_process.id))
+            if current_process.burst_time > time_quantum: # run the task for a quantum, then insert to the end of queue
+                current_process.burst_time -= time_quantum
+                current_time += time_quantum
+                process_return_to_list = True
+            else: # finish the task
+                current_time += current_process.burst_time
+                current_process.burst_time = 0
+                waiting_time += waiting_time + (current_time - current_process.arrive_time)
+        else: # no task anymore
             current_time += time_quantum
-            while(True): # check whether comes in new task
-                if len(process_list) != 0 and process_list[0].arrive_time <= current_time: # assuming insert new task happend before insert back old task
-                    ready_queue.append(process_list.pop(0))
-                else:
-                    break
-        else: # finish the task
-            current_time += current_process.burst_time
-            waiting_time += waiting_time + (current_time - current_process.arrive_time)
-        average_waiting_time = waiting_time/float(len(process_list))
-        return schedule, average_waiting_time
+        while True: # check whether comes in new task
+            if len(process_list) != 0 and process_list[0].arrive_time <= current_time: # assuming insert new task happend before insert back old task
+                ready_queue.append(process_list.pop(0))
+            else:
+                break
+        if current_process is not None and current_process.burst_time > 0:
+            ready_queue.append(current_process)
+    average_waiting_time = waiting_time/float(len_process)
+    return schedule, average_waiting_time
         
 
     return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
