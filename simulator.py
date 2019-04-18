@@ -10,6 +10,7 @@ Output files:
     SJF.txt
 '''
 import sys
+import copy
 
 input_file = 'input.txt'
 
@@ -41,9 +42,8 @@ def FCFS_scheduling(process_list):
 #Output_1 : Schedule list contains pairs of (time_stamp, proccess_id) indicating the time switching to that proccess_id
 #Output_2 : Average Waiting Time
 def RR_scheduling(process_list, time_quantum):
-    _process_list = process_list.copy()
+    _process_list = copy.deepcopy(process_list)
     schedule = []
-    len_process = len(_process_list)
     ready_queue = [_process_list.pop(0)] # insert the first process
     current_time = 0
     waiting_time = 0
@@ -69,39 +69,47 @@ def RR_scheduling(process_list, time_quantum):
                 break
         if current_process is not None and current_process.burst_time > 0:
             ready_queue.append(current_process)
-    average_waiting_time = waiting_time/float(len_process)
+    average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
         
 
     return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
 
 def SRTF_scheduling(process_list):
-    _process_list = process_list.copy()
+    _process_list = copy.deepcopy(process_list)
     schedule = []
-    len_process = len(_process_list)
     reamining_queue = [_process_list.pop(0)] # insert the first process
     current_time = 0
     waiting_time = 0
+    schedule.append((current_time, reamining_queue[0].id))
     while len(reamining_queue) > 0 or len(_process_list) > 0:
-        if len(reamining_queue) == 0:
-            reamining_queue.append(_process_list.pop(0))
-        elif len(_process_list) == 0 or current_time + reamining_queue[0].burst_time <= _process_list[0].arrive_time:
+        if len(_process_list) == 0:
             tmp_process = reamining_queue.pop(0)
             schedule.append((current_time, tmp_process.id))
             current_time += tmp_process.burst_time
             waiting_time += (current_time - tmp_process.arrive_time)
-        else: ## comes in a new task
-            tmp_process = _process_list.pop[0]
-            remaining_time = current_time + reamining_queue[0].burst_time - tmp_process.arrive_time
-            if remaining_time > tmp_process.burst_time: # need preemptive
-                schedule.append((current_time, reamining_queue[0].id))
+        else: ## still has task comes in
+            if len(reamining_queue) == 0: # no remaining task
+                tmp_process = _process_list.pop(0)
                 current_time = tmp_process.arrive_time
-                reamining_queue[0].burst_time = remaining_time
-                reamining_queue.insert(0, tmp_process)
-            else:
                 reamining_queue.append(tmp_process)
-                sorted(reamining_queue, key=lambda x: x.burst_time)
-    average_waiting_time = waiting_time/float(len_process)
+                schedule.append((current_time, tmp_process.id))
+            elif current_time + reamining_queue[0].burst_time > _process_list[0].arrive_time: # comes in a new task
+                tmp_process = _process_list.pop(0)
+                remaining_time = current_time + reamining_queue[0].burst_time - tmp_process.arrive_time
+                if remaining_time > tmp_process.burst_time: # need preemptive
+                    current_time = tmp_process.arrive_time
+                    schedule.append((current_time, tmp_process.id))
+                reamining_queue[0].burst_time = remaining_time
+                reamining_queue.append(tmp_process)
+                reamining_queue = sorted(reamining_queue, key=lambda x: x.burst_time)
+            else:
+                finished_task = reamining_queue.pop(0)
+                current_time += finished_task.burst_time
+                waiting_time += (current_time - finished_task.arrive_time)
+                if len(reamining_queue) != 0 :
+                    schedule.append((current_time, reamining_queue[0].id))
+    average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
 
 def SJF_scheduling(process_list, alpha):
