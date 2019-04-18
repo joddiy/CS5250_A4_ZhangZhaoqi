@@ -41,12 +41,13 @@ def FCFS_scheduling(process_list):
 #Output_1 : Schedule list contains pairs of (time_stamp, proccess_id) indicating the time switching to that proccess_id
 #Output_2 : Average Waiting Time
 def RR_scheduling(process_list, time_quantum):
+    _process_list = process_list.copy()
     schedule = []
-    ready_queue = [process_list.pop(0)] # insert the first process
+    len_process = len(_process_list)
+    ready_queue = [_process_list.pop(0)] # insert the first process
     current_time = 0
     waiting_time = 0
-    len_process = len(process_list)
-    while len(ready_queue) > 0 or len(process_list) > 0:
+    while len(ready_queue) > 0 or len(_process_list) > 0:
         current_process = None
         if len(ready_queue) != 0: # still task need to be run
             current_process = ready_queue.pop(0) # get a task from the head of queue
@@ -58,12 +59,12 @@ def RR_scheduling(process_list, time_quantum):
             else: # finish the task
                 current_time += current_process.burst_time
                 current_process.burst_time = 0
-                waiting_time += waiting_time + (current_time - current_process.arrive_time)
+                waiting_time += (current_time - current_process.arrive_time)
         else: # no task anymore
             current_time += time_quantum
         while True: # check whether comes in new task
-            if len(process_list) != 0 and process_list[0].arrive_time <= current_time: # assuming insert new task happend before insert back old task
-                ready_queue.append(process_list.pop(0))
+            if len(_process_list) != 0 and _process_list[0].arrive_time <= current_time: # assuming insert new task happend before insert back old task
+                ready_queue.append(_process_list.pop(0))
             else:
                 break
         if current_process is not None and current_process.burst_time > 0:
@@ -75,7 +76,33 @@ def RR_scheduling(process_list, time_quantum):
     return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
 
 def SRTF_scheduling(process_list):
-    return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], 0.0)
+    _process_list = process_list.copy()
+    schedule = []
+    len_process = len(_process_list)
+    reamining_queue = [_process_list.pop(0)] # insert the first process
+    current_time = 0
+    waiting_time = 0
+    while len(reamining_queue) > 0 or len(_process_list) > 0:
+        if len(reamining_queue) == 0:
+            reamining_queue.append(_process_list.pop(0))
+        elif len(_process_list) == 0 or current_time + reamining_queue[0].burst_time <= _process_list[0].arrive_time:
+            tmp_process = reamining_queue.pop(0)
+            schedule.append((current_time, tmp_process.id))
+            current_time += tmp_process.burst_time
+            waiting_time += (current_time - tmp_process.arrive_time)
+        else: ## comes in a new task
+            tmp_process = _process_list.pop[0]
+            remaining_time = current_time + reamining_queue[0].burst_time - tmp_process.arrive_time
+            if remaining_time > tmp_process.burst_time: # need preemptive
+                schedule.append((current_time, reamining_queue[0].id))
+                current_time = tmp_process.arrive_time
+                reamining_queue[0].burst_time = remaining_time
+                reamining_queue.insert(0, tmp_process)
+            else:
+                reamining_queue.append(tmp_process)
+                sorted(reamining_queue, key=lambda x: x.burst_time)
+    average_waiting_time = waiting_time/float(len_process)
+    return schedule, average_waiting_time
 
 def SJF_scheduling(process_list, alpha):
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)

@@ -1,2 +1,17 @@
-to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process 
-average waiting time 0.00 
+(0, 0)
+(0, 1)
+(0, 2)
+(0, 3)
+(0, 3)
+(0, 1)
+(0, 2)
+(0, 0)
+(0, 2)
+(0, 0)
+(0, 1)
+(0, 3)
+(0, 1)
+(0, 0)
+(0, 2)
+(0, 3)
+average waiting time -48.38 
