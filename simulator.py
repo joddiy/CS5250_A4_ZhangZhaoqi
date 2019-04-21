@@ -113,6 +113,7 @@ def SRTF_scheduling(process_list):
     return schedule, average_waiting_time
 
 def SJF_scheduling(process_list, alpha):
+    
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
 
 
