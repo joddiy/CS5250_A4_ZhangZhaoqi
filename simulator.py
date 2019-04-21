@@ -55,7 +55,6 @@ def RR_scheduling(process_list, time_quantum):
             if current_process.burst_time > time_quantum: # run the task for a quantum, then insert to the end of queue
                 current_process.burst_time -= time_quantum
                 current_time += time_quantum
-                process_return_to_list = True
             else: # finish the task
                 current_time += current_process.burst_time
                 current_process.burst_time = 0
@@ -71,9 +70,6 @@ def RR_scheduling(process_list, time_quantum):
             ready_queue.append(current_process)
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
-        
-
-    return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
 
 def SRTF_scheduling(process_list):
     _process_list = copy.deepcopy(process_list)
@@ -83,36 +79,37 @@ def SRTF_scheduling(process_list):
     waiting_time = 0
     schedule.append((current_time, reamining_queue[0].id))
     while len(reamining_queue) > 0 or len(_process_list) > 0:
-        if len(_process_list) == 0:
+        if len(_process_list) == 0: # if process_list is empty, tackle remaining queue one by one
             tmp_process = reamining_queue.pop(0)
             schedule.append((current_time, tmp_process.id))
             current_time += tmp_process.burst_time
             waiting_time += (current_time - tmp_process.arrive_time)
         else: ## still has task comes in
-            if len(reamining_queue) == 0: # no remaining task
+            if len(reamining_queue) == 0: # no remaining task, reqeust a new process
                 tmp_process = _process_list.pop(0)
                 current_time = tmp_process.arrive_time
                 reamining_queue.append(tmp_process)
                 schedule.append((current_time, tmp_process.id))
-            elif current_time + reamining_queue[0].burst_time > _process_list[0].arrive_time: # comes in a new task
+            elif current_time + reamining_queue[0].burst_time > _process_list[0].arrive_time: # comes in a new task during taclke the remaining queue
                 tmp_process = _process_list.pop(0)
-                remaining_time = current_time + reamining_queue[0].burst_time - tmp_process.arrive_time
-                if remaining_time > tmp_process.burst_time: # need preemptive
-                    current_time = tmp_process.arrive_time
+                remaining_time = current_time + reamining_queue[0].burst_time - tmp_process.arrive_time # current task's remaining time
+                current_time = tmp_process.arrive_time
+                reamining_queue[0].burst_time = remaining_time # update current task's reamining time
+                if remaining_time > tmp_process.burst_time: # reamining time larger than new task's burst_time, need preemptive
                     schedule.append((current_time, tmp_process.id))
-                reamining_queue[0].burst_time = remaining_time
-                reamining_queue.append(tmp_process)
-                reamining_queue = sorted(reamining_queue, key=lambda x: x.burst_time)
-            else:
-                finished_task = reamining_queue.pop(0)
-                current_time += finished_task.burst_time
-                waiting_time += (current_time - finished_task.arrive_time)
-                if len(reamining_queue) != 0 :
+                reamining_queue.append(tmp_process) # insert the new task into queue
+                reamining_queue = sorted(reamining_queue, key=lambda x: x.burst_time) # sort remaining queue
+            else: # next task is too far, taclk reamining queue first
+                tmp_process = reamining_queue.pop(0)
+                current_time += tmp_process.burst_time
+                waiting_time += (current_time - tmp_process.arrive_time)
+                if len(reamining_queue) != 0:
                     schedule.append((current_time, reamining_queue[0].id))
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
 
 def SJF_scheduling(process_list, alpha):
+
     
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
 
