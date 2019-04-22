@@ -93,6 +93,7 @@ def SRTF_scheduling(process_list):
                 tmp_process.burst_time = current_time + tmp_process.burst_time - _process_list[0].arrive_time
                 reamining_queue.append(tmp_process)
                 come_processs = _process_list.pop(0)
+                last_execute_end[tmp_process.id] = come_processs.arrive_time
                 current_time = come_processs.arrive_time
                 reamining_queue.append(come_processs)
                 last_execute_end[come_processs.id] = come_processs.arrive_time
