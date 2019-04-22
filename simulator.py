@@ -48,30 +48,27 @@ def RR_scheduling(process_list, time_quantum):
     current_time = 0
     waiting_time = 0
     while len(ready_queue) > 0 or len(_process_list) > 0:
-        current_process = None
         if len(ready_queue) != 0: # still task need to be run
-            current_process = ready_queue.pop(0) # get a task from the head of queue
-            schedule.append((current_time, current_process.id))
-            if current_process.burst_time > time_quantum: # run the task for a quantum, then insert to the end of queue
-                current_process.burst_time -= time_quantum
-                current_time += time_quantum
-            else: # finish the task
-                current_time += current_process.burst_time
-                current_process.burst_time = 0
-                waiting_time += (current_time - current_process.arrive_time)
-        else: # no task anymore
-            current_time += time_quantum
-        while True: # check whether comes in new task
-            if len(_process_list) != 0 and _process_list[0].arrive_time <= current_time: # assuming insert new task happend before insert back old task
+            tmp_process = ready_queue.pop(0) # get a task from the head of queue
+            schedule.append((current_time, tmp_process.id))
+            # check whether comes in new task
+            while len(_process_list) > 0 and current_time + time_quantum >= _process_list[0].arrive_time:
                 ready_queue.append(_process_list.pop(0))
-            else:
-                break
-        if current_process is not None and current_process.burst_time > 0:
-            ready_queue.append(current_process)
+            if tmp_process.burst_time > time_quantum: # run the task for a quantum, then insert to the end of queue
+                current_time += time_quantum
+                tmp_process.burst_time -= time_quantum
+                ready_queue.append(tmp_process)
+            else: # finish the task
+                current_time += tmp_process.burst_time
+                tmp_process.burst_time = 0
+                waiting_time += (current_time - tmp_process.arrive_time)
+        elif len(_process_list) != 0: # no task anymore, request a new process
+            ready_queue.append(_process_list.pop(0))
+            current_time = ready_queue[0].arrive_time
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
 
-def SRTF_scheduling(process_list):
+def SRTF_scheduling(process_list):  
     _process_list = copy.deepcopy(process_list)
     schedule = []
     reamining_queue = [_process_list.pop(0)] # insert the first process
