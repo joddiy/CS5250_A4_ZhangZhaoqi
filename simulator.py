@@ -44,7 +44,7 @@ def FCFS_scheduling(process_list):
 def RR_scheduling(process_list, time_quantum):
     _process_list = copy.deepcopy(process_list)
     schedule = []
-    ready_queue = [_process_list.pop(0)] # insert the first process
+    ready_queue = []
     current_time = 0
     waiting_time = 0
     while len(ready_queue) > 0 or len(_process_list) > 0:
@@ -71,37 +71,28 @@ def RR_scheduling(process_list, time_quantum):
 def SRTF_scheduling(process_list):  
     _process_list = copy.deepcopy(process_list)
     schedule = []
-    reamining_queue = [_process_list.pop(0)] # insert the first process
+    reamining_queue = []
     current_time = 0
     waiting_time = 0
-    schedule.append((current_time, reamining_queue[0].id))
     while len(reamining_queue) > 0 or len(_process_list) > 0:
-        if len(_process_list) == 0: # if process_list is empty, tackle remaining queue one by one
-            tmp_process = reamining_queue.pop(0)
-            schedule.append((current_time, tmp_process.id))
-            current_time += tmp_process.burst_time
-            waiting_time += (current_time - tmp_process.arrive_time)
-        else: ## still has task comes in
-            if len(reamining_queue) == 0: # no remaining task, reqeust a new process
-                tmp_process = _process_list.pop(0)
-                current_time = tmp_process.arrive_time
-                reamining_queue.append(tmp_process)
+        if len(reamining_queue) != 0:
+            tmp_process = reamining_queue.pop(0) # get a task from the head of queue
+            if len(schedule) == 0 or schedule[-1][1] != tmp_process.id:
                 schedule.append((current_time, tmp_process.id))
-            elif current_time + reamining_queue[0].burst_time > _process_list[0].arrive_time: # comes in a new task during taclke the remaining queue
-                tmp_process = _process_list.pop(0)
-                remaining_time = current_time + reamining_queue[0].burst_time - tmp_process.arrive_time # current task's remaining time
-                current_time = tmp_process.arrive_time
-                reamining_queue[0].burst_time = remaining_time # update current task's reamining time
-                if remaining_time > tmp_process.burst_time: # reamining time larger than new task's burst_time, need preemptive
-                    schedule.append((current_time, tmp_process.id))
-                reamining_queue.append(tmp_process) # insert the new task into queue
-                reamining_queue = sorted(reamining_queue, key=lambda x: x.burst_time) # sort remaining queue
-            else: # next task is too far, taclk reamining queue first
-                tmp_process = reamining_queue.pop(0)
+            # check whether comes in new task
+            if len(_process_list) > 0 and current_time + tmp_process.burst_time > _process_list[0].arrive_time:
+                tmp_process.burst_time = current_time + tmp_process.burst_time - _process_list[0].arrive_time
+                current_time = _process_list[0].arrive_time
+                reamining_queue.append(tmp_process)
+                reamining_queue.append(_process_list.pop(0))
+                reamining_queue = sorted(reamining_queue, key=lambda x: x.burst_time * 1e5 + x.arrive_time) # sort remaining queue
+            else: # finish the task
                 current_time += tmp_process.burst_time
+                tmp_process.burst_time = 0
                 waiting_time += (current_time - tmp_process.arrive_time)
-                if len(reamining_queue) != 0:
-                    schedule.append((current_time, reamining_queue[0].id))
+        elif len(_process_list) != 0:
+            reamining_queue.append(_process_list.pop(0))
+            current_time = reamining_queue[0].arrive_time
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
 
