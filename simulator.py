@@ -97,10 +97,34 @@ def SRTF_scheduling(process_list):
     return schedule, average_waiting_time
 
 def SJF_scheduling(process_list, alpha):
-
-    
-    return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
-
+    _process_list = copy.deepcopy(process_list)
+    schedule = []
+    guess_value = dict((process.id, 5) for process in process_list) # init guess = 5
+    ready_queue = []
+    current_time = 0
+    waiting_time = 0
+    while len(ready_queue) > 0 or len(_process_list) > 0:
+        if len(ready_queue) != 0: # still task need to be run
+            min_id = 0
+            min_guess = 1e5
+            for id, process in enumerate(ready_queue):
+                if guess_value[process.id] < min_guess:
+                    min_guess = guess_value[process.id]
+                    min_id = id
+            tmp_process = ready_queue.pop(min_id) # get a task which has smallest guess value 
+            schedule.append((current_time, tmp_process.id))
+            while len(_process_list) > 0 and current_time + tmp_process.burst_time >= _process_list[0].arrive_time:
+                ready_queue.append(_process_list.pop(0))
+            # finish this task and update guess value
+            current_time += tmp_process.burst_time
+            guess_value[tmp_process.id] = alpha * tmp_process.burst_time + (1 - alpha) * guess_value[tmp_process.id]
+            tmp_process.burst_time = 0
+            waiting_time += (current_time - tmp_process.arrive_time)
+        elif len(_process_list) != 0: # no task anymore, request a new process
+            ready_queue.append(_process_list.pop(0))
+            current_time = ready_queue[0].arrive_time
+    average_waiting_time = waiting_time/float(len(process_list))
+    return schedule, average_waiting_time
 
 def read_input():
     result = []
