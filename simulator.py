@@ -45,26 +45,33 @@ def RR_scheduling(process_list, time_quantum):
     _process_list = copy.deepcopy(process_list)
     schedule = []
     ready_queue = []
+    last_execute_end = dict()
     current_time = 0
     waiting_time = 0
     while len(ready_queue) > 0 or len(_process_list) > 0:
         if len(ready_queue) != 0: # still task need to be run
             tmp_process = ready_queue.pop(0) # get a task from the head of queue
+            waiting_time += (current_time - last_execute_end[tmp_process.id])
             schedule.append((current_time, tmp_process.id))
             # check whether comes in new task
             while len(_process_list) > 0 and current_time + time_quantum >= _process_list[0].arrive_time:
-                ready_queue.append(_process_list.pop(0))
+                come_processs = _process_list.pop(0)
+                ready_queue.append(come_processs)
+                last_execute_end[come_processs.id] = come_processs.arrive_time
             if tmp_process.burst_time > time_quantum: # run the task for a quantum, then insert to the end of queue
                 current_time += time_quantum
+                last_execute_end[tmp_process.id] = current_time
                 tmp_process.burst_time -= time_quantum
                 ready_queue.append(tmp_process)
             else: # finish the task
                 current_time += tmp_process.burst_time
                 tmp_process.burst_time = 0
-                waiting_time += (current_time - tmp_process.arrive_time)
+                del last_execute_end[tmp_process.id]
         elif len(_process_list) != 0: # no task anymore, request a new process
-            ready_queue.append(_process_list.pop(0))
-            current_time = ready_queue[0].arrive_time
+            come_processs = _process_list.pop(0)
+            ready_queue.append(come_processs)
+            current_time = come_processs.arrive_time
+            last_execute_end[come_processs.id] = come_processs.arrive_time
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
 
@@ -72,27 +79,33 @@ def SRTF_scheduling(process_list):
     _process_list = copy.deepcopy(process_list)
     schedule = []
     reamining_queue = []
+    last_execute_end = dict()
     current_time = 0
     waiting_time = 0
     while len(reamining_queue) > 0 or len(_process_list) > 0:
         if len(reamining_queue) != 0:
             tmp_process = reamining_queue.pop(0) # get a task from the head of queue
             if len(schedule) == 0 or schedule[-1][1] != tmp_process.id:
+                waiting_time += (current_time - last_execute_end[tmp_process.id])
                 schedule.append((current_time, tmp_process.id))
             # check whether comes in new task
             if len(_process_list) > 0 and current_time + tmp_process.burst_time > _process_list[0].arrive_time:
                 tmp_process.burst_time = current_time + tmp_process.burst_time - _process_list[0].arrive_time
-                current_time = _process_list[0].arrive_time
                 reamining_queue.append(tmp_process)
-                reamining_queue.append(_process_list.pop(0))
+                come_processs = _process_list.pop(0)
+                current_time = come_processs.arrive_time
+                reamining_queue.append(come_processs)
+                last_execute_end[come_processs.id] = come_processs.arrive_time
                 reamining_queue = sorted(reamining_queue, key=lambda x: x.burst_time * 1e5 + x.arrive_time) # sort remaining queue
             else: # finish the task
                 current_time += tmp_process.burst_time
                 tmp_process.burst_time = 0
-                waiting_time += (current_time - tmp_process.arrive_time)
+                del last_execute_end[tmp_process.id]
         elif len(_process_list) != 0:
-            reamining_queue.append(_process_list.pop(0))
-            current_time = reamining_queue[0].arrive_time
+            come_processs = _process_list.pop(0)
+            reamining_queue.append(come_processs)
+            current_time = come_processs.arrive_time
+            last_execute_end[come_processs.id] = come_processs.arrive_time
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
 
@@ -100,6 +113,7 @@ def SJF_scheduling(process_list, alpha):
     _process_list = copy.deepcopy(process_list)
     schedule = []
     guess_value = dict((process.id, 5) for process in process_list) # init guess = 5
+    last_execute_end = dict((process.id, 0) for process in process_list) # init last exectue end time = 0
     ready_queue = []
     current_time = 0
     waiting_time = 0
@@ -112,17 +126,24 @@ def SJF_scheduling(process_list, alpha):
                     min_guess = guess_value[process.id]
                     min_id = id
             tmp_process = ready_queue.pop(min_id) # get a task which has smallest guess value 
+            waiting_time += (current_time - last_execute_end[tmp_process.id])
             schedule.append((current_time, tmp_process.id))
+            # check whether comes in new task
             while len(_process_list) > 0 and current_time + tmp_process.burst_time >= _process_list[0].arrive_time:
-                ready_queue.append(_process_list.pop(0))
+                come_processs = _process_list.pop(0)
+                ready_queue.append(come_processs)
+                last_execute_end[come_processs.id] = come_processs.arrive_time
             # finish this task and update guess value
             current_time += tmp_process.burst_time
+            last_execute_end[tmp_process.id] = current_time
             guess_value[tmp_process.id] = alpha * tmp_process.burst_time + (1 - alpha) * guess_value[tmp_process.id]
             tmp_process.burst_time = 0
-            waiting_time += (current_time - tmp_process.arrive_time)
+            del last_execute_end[tmp_process.id]
         elif len(_process_list) != 0: # no task anymore, request a new process
-            ready_queue.append(_process_list.pop(0))
-            current_time = ready_queue[0].arrive_time
+            come_processs = _process_list.pop(0)
+            ready_queue.append(come_processs)
+            current_time = come_processs.arrive_time
+            last_execute_end[come_processs.id] = come_processs.arrive_time
     average_waiting_time = waiting_time/float(len(process_list))
     return schedule, average_waiting_time
 
